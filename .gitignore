@@ -1,0 +1,4 @@
+# ignore the generated outputs; you can generate any time you want by running main.py
+FA*
+SU*
+SP*

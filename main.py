@@ -29,6 +29,7 @@ def subjectIDs(url):
             html = f.read()
     else:
         html = requests.get(url).text
+        os.makedirs(f'{semester}')
         with open(f'{semester}/subjectIDs.html', 'w') as f:
             f.write(html)
 
@@ -49,6 +50,7 @@ def generateCSVForSemestersSubject(semester: str, subject: str):
 
     # get the html and pass down the file to the parser object
     if os.path.exists(f'{semester}/{subject}.html'):
+        return
         with open(f'{semester}/{subject}.html', 'r') as f:
             reqText = f.read()
     else:
@@ -77,13 +79,20 @@ def generateCSVForSemestersSubject(semester: str, subject: str):
 
 # generate for all of them then!
 url = "https://classes.cornell.edu/browse/roster/"
-for i in range(14, 15):
+for i in range(14, 24):
     semesters = []
     semesters.append("FA" + str(i))
     semesters.append("SU" + str(i))
     semesters.append("SP" + str(i))
     for semester in semesters:
-        subjects = subjectIDs(url + semester)
+        try:
+            subjects = subjectIDs(url + semester)
+        except Exception:
+            print()
+            print(f"requesting the subject codes for {semester} failed")
+            print()
+            continue
+
         if subjects:
             for subject in subjects:
                 generateCSVForSemestersSubject(semester, subject)
