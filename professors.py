@@ -8,11 +8,12 @@ import os
 
 
 class ProfessorSearch:
+    sections = []
     files = []
 
-    def __init__(self, files) -> None:
-        self.files = files
-        print(files)
+    def __init__(self, folder) -> None:
+        self.files = []
+        self.sections = []
 
 
-prof = ProfessorSearch([f for f in os.listdir() if f.endswith('.csv')])
+prof = ProfessorSearch('FA14')

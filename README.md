@@ -27,4 +27,4 @@ This allows us to check the past offerings from the professor and with the help 
 > Create a class that checks all the csv files in that directory and finds a list of lecture type sections that corresponds to that professor. Return that list.
 
 1. Helper function that finds all the distinct professors from the section
-2. For each professor, run that class and with the List of CSV rows, save these rows into a file (in the folder called professors).
+2. For each professor, run that class and with the List of CSV rows to grab the relevant datas, save these rows into a file (in the folder called professors).
