@@ -7,3 +7,5 @@ __pycache__
 
 netids.txt
 netids.raw
+
+*.csv
