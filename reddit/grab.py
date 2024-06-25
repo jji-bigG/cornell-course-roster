@@ -6,16 +6,14 @@ import datetime as dt
 import os
 import csv
 
+courses = [
+    "cs 4780",
+    "cs 4820",
+    "cs 4320",
+]
 
-def redditData(subreddit: str, limit: int):
-    reddit = praw.Reddit(
-        client_id="jOKiM6A9lyq-0apUyNwQNw",
-        client_secret="sgRFQtP7vzOjUcR16vAjGvUeTw0Q7A",
-        user_agent="jji-bigg",
-    )
-    subreddit = reddit.subreddit("cornell")
-    top_subreddit = subreddit.top(limit=10)
 
+def get_subreddit_data(submissions):
     topics_dict = {
         "title": [],
         "score": [],
@@ -24,9 +22,8 @@ def redditData(subreddit: str, limit: int):
         "num_comments": [],
         "created": [],
         "body": [],
-        "comments": [],
     }
-    for submission in top_subreddit:
+    for submission in submissions:
         topics_dict["title"].append(submission.title)
         topics_dict["score"].append(submission.score)
         topics_dict["id"].append(submission.id)
@@ -40,10 +37,9 @@ def redditData(subreddit: str, limit: int):
             columns=["comment", "score", "username", "user_id", "created"], index=None
         )
         # submission.comments.replace_more(limit=32)
-        c = 0
         for comment in submission.comments.list():
             if isinstance(comment, praw.models.MoreComments):
-                print(f"more comments: {comment.count}")
+                print(f"more comments: {comment.body}")
                 continue
             # topics_dict["comment"].append(comment.body)
             # else: continue
@@ -67,21 +63,32 @@ def redditData(subreddit: str, limit: int):
                 id,
                 comment.created,
             ]
-            c += 1
-            if c % 10 == 0:
-                print(f"{c} comments added")
+            comments_df.sort_values(by="score", ascending=False)
+        topics_dict["comments"] = comments_df.to_json(orient="split")
 
-        comments_df.sort_values(by="score", ascending=False)
-        topics_dict["comments"].append(comments_df.to_json(orient="split"))
-    topics_data = pd.DataFrame(topics_dict)
-    return topics_data
+    return topics_dict
 
 
-def generateCSVForReddit(subreddit: str, limit: int, fname: str = "reddit_data"):
-    if not os.path.exists(subreddit):
-        os.makedirs(subreddit)
-    redditData(subreddit, limit).to_csv(f"reddit/{fname}.csv", index=False)
+def redditData(subreddit: str, search: str, limit: int):
+    reddit = praw.Reddit(
+        client_id="jOKiM6A9lyq-0apUyNwQNw",
+        client_secret="sgRFQtP7vzOjUcR16vAjGvUeTw0Q7A",
+        user_agent="jji-bigg",
+    )
+    subreddit = reddit.subreddit("cornell")
+
+    return pd.DataFrame(get_subreddit_data(subreddit.search(search, limit=limit)))
 
 
-print("impoted packages")
-generateCSVForReddit("cornell", 2)
+def generateCSVForReddit(
+    search, limit: int, subreddit: str = "cornell", fname: str = None
+):
+    if fname is None:
+        fname = f"reddit/{search}.csv"
+    data = redditData(subreddit, search, limit)
+    data.to_csv(fname, index=False)
+
+
+for course in courses:
+    generateCSVForReddit(course, 6)
+    print(f"done with {course}")
