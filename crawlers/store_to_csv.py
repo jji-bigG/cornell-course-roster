@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup
 import csv
 import os
 
-from crawler import SubjectRoster
+from crawlers.roster_crawler import SubjectRoster
 
 # semesters_url_list = [
 #     "https://classes.cornell.edu/browse/roster/FA23"
@@ -24,13 +24,13 @@ from crawler import SubjectRoster
 
 
 def subjectIDs(url):
-    if os.path.exists(f'{semester}/subjectIDs.html'):
-        with open(f'{semester}/subjectIDs.html', 'r') as f:
+    if os.path.exists(f"{semester}/subjectIDs.html"):
+        with open(f"{semester}/subjectIDs.html", "r") as f:
             html = f.read()
     else:
         html = requests.get(url).text
-        os.makedirs(f'{semester}')
-        with open(f'{semester}/subjectIDs.html', 'w') as f:
+        os.makedirs(f"{semester}")
+        with open(f"{semester}/subjectIDs.html", "w") as f:
             f.write(html)
 
     bsParser = BeautifulSoup(html, "lxml")
@@ -38,30 +38,31 @@ def subjectIDs(url):
     ids = []
     for item in bsParser.find_all(name="ul", class_="subject-group"):
         # itemParser = BeautifulSoup(item)
-        ids.append(item.find('li').find('a').contents[0])
+        ids.append(item.find("li").find("a").contents[0])
     return ids
 
 
 # print(subjectIDs(semesters_url_list[0]))
 def generateCSVForSemestersSubject(semester: str, subject: str):
-    print(f'working on {semester} {subject}')
+    print(f"working on {semester} {subject}")
     if not os.path.exists(semester):
         os.makedirs(semester)
 
     # get the html and pass down the file to the parser object
-    if os.path.exists(f'{semester}/{subject}.html'):
-        return
-        with open(f'{semester}/{subject}.html', 'r') as f:
+    if os.path.exists(f"{semester}/{subject}.html"):
+        # return
+        with open(f"{semester}/{subject}.html", "r") as f:
             reqText = f.read()
     else:
         reqText = requests.get(
-            f"https://classes.cornell.edu/browse/roster/{semester}/subject/{subject}").text
+            f"https://classes.cornell.edu/browse/roster/{semester}/subject/{subject}"
+        ).text
 
-        with open(f'{semester}/{subject}.html', 'a+') as f:
+        with open(f"{semester}/{subject}.html", "a+") as f:
             f.write(reqText)
 
-    if os.path.exists(f'{semester}/{subject}.csv'):
-        os.remove(f'{semester}/{subject}.csv')
+    if os.path.exists(f"{semester}/{subject}.csv"):
+        os.remove(f"{semester}/{subject}.csv")
 
     roster = SubjectRoster(reqText)
     roster.buildSections()
@@ -69,7 +70,7 @@ def generateCSVForSemestersSubject(semester: str, subject: str):
     if not roster.sections:
         return
 
-    with open(f'{semester}/{subject}.csv', 'a+') as f:
+    with open(f"{semester}/{subject}.csv", "a+") as f:
         # print(roster.sections[0][0].keys())
         w = csv.DictWriter(f, roster.sections[0][0].keys())
         w.writeheader()
@@ -110,5 +111,5 @@ def subjectIDs_Old_Format(url):
     ids = []
     for item in bsParser.find_all(name="ul", class_="subject-group"):
         # itemParser = BeautifulSoup(item)
-        ids.append(item.find('li').find('a').contents[0])
+        ids.append(item.find("li").find("a").contents[0])
     return ids

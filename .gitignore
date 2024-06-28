@@ -4,8 +4,14 @@ SU*
 SP*
 
 __pycache__
+*.pyc
 
 netids.txt
 netids.raw
 
 *.csv
+*.db
+
+reddit/reddit_key.json
+
+*.env
