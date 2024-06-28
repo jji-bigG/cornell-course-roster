@@ -84,7 +84,7 @@ class SubjectRoster:
             sections.append({
                 "name": name,
                 "type": self.findTypeFromClass(c).strip(),
-                'section number': self.findSectionNumberFromClass(c).strip(),
+                'section_number': self.findSectionNumberFromClass(c).strip(),
                 "location": self.findLocationFromClass(c).strip(),
                 'days': self.findDaysFromClass(c).strip(),
                 'time': self.findTimeFromClass(c).strip(),

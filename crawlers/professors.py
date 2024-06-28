@@ -1,6 +1,6 @@
-# DS analysis
-# find all the professors and list all of their lectures
+# find all the professors and list all of their websites and stuff
 # (but bc discussions r kinda bs just listed there)
+
 import csv
 import os
 

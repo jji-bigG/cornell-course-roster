@@ -1,0 +1,1 @@
+# the server definition for the roster_queries service

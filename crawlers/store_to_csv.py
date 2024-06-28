@@ -33,7 +33,7 @@ def subjectIDs(url):
         with open(f'{semester}/subjectIDs.html', 'w') as f:
             f.write(html)
 
-    bsParser = BeautifulSoup(html, "html.parser")
+    bsParser = BeautifulSoup(html, "lxml")
 
     ids = []
     for item in bsParser.find_all(name="ul", class_="subject-group"):
@@ -105,7 +105,7 @@ for i in range(14, 24):
 def subjectIDs_Old_Format(url):
     # not written yet
     page = requests.get(url)
-    bsParser = BeautifulSoup(page.text, "html.parser")
+    bsParser = BeautifulSoup(page.text, "lxml")
 
     ids = []
     for item in bsParser.find_all(name="ul", class_="subject-group"):

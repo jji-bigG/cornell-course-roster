@@ -6,6 +6,10 @@ import datetime as dt
 import os
 import csv
 
+import json
+
+api_keys = json.loads(open('reddit_key.json').read())
+
 courses = [
     "cs 4780",
     "cs 4820",
@@ -71,8 +75,8 @@ def get_subreddit_data(submissions):
 
 def redditData(subreddit: str, search: str, limit: int):
     reddit = praw.Reddit(
-        client_id="jOKiM6A9lyq-0apUyNwQNw",
-        client_secret="sgRFQtP7vzOjUcR16vAjGvUeTw0Q7A",
+        client_id=api_keys['client_id'],
+        client_secret=api_keys['client_secret'],
         user_agent="jji-bigg",
     )
     subreddit = reddit.subreddit("cornell")
