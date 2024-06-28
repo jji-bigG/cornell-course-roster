@@ -26,5 +26,5 @@ CREATE TABLE IF NOT EXISTS courses (
 CREATE TABLE IF NOT EXISTS course_descriptions (
     course_description_id INTEGER PRIMARY KEY AUTOINCREMENT,
     course_code TEXT,
-    description TEXT
+    description TEXT,
 );
