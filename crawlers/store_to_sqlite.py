@@ -2,7 +2,8 @@ import os
 import requests
 import sqlite3
 from bs4 import BeautifulSoup
-from crawlers.roster_crawler import (
+from course_details import iterate_from_latest_to_oldest
+from roster_crawler import (
     SubjectRoster,
 )  # Assuming you have this module as mentioned
 
@@ -102,23 +103,29 @@ def generateSQLForSemestersSubject(semester: str, subject: str):
 
 
 # Main process to go through all semesters and subjects
-url = "https://classes.cornell.edu/browse/roster/"
-for i in range(14, 25):
-    semesters = []
-    semesters.append("FA" + str(i))
-    semesters.append("SU" + str(i))
-    semesters.append("SP" + str(i))
-    for semester in semesters:
-        try:
-            subjects = subjectIDs(url + semester, semester)
-        except Exception as e:
-            print(f"\nRequesting the subject codes for {semester} failed: {e}\n")
-            continue
+def main():
+    url = "https://classes.cornell.edu/browse/roster/"
+    for i in reversed(range(14, 25)):
+        semesters = []
+        semesters.append("FA" + str(i))
+        semesters.append("SU" + str(i))
+        semesters.append("SP" + str(i))
+        for semester in semesters:
+            try:
+                subjects = subjectIDs(url + semester, semester)
+            except Exception as e:
+                print(f"\nRequesting the subject codes for {semester} failed: {e}\n")
+                continue
 
-        if subjects:
-            insert_subjects(semester, subjects)
-            for subject in subjects:
-                generateSQLForSemestersSubject(semester, subject)
+            if subjects:
+                insert_subjects(semester, subjects)
+                for subject in subjects:
+                    generateSQLForSemestersSubject(semester, subject)
+
+
+if __name__ == "__main__":
+    main()
+    iterate_from_latest_to_oldest(cursor)
 
 # Close the database connection
 conn.close()
