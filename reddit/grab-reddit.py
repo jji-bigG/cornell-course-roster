@@ -2,22 +2,30 @@
 
 import praw
 import pandas as pd
-import datetime as dt
-import os
-import csv
 
 import json
+import sqlite3
+import os
 
-api_keys = json.loads(open('reddit_key.json').read())
+current_dir = os.path.dirname(os.path.realpath(__file__))
 
-courses = [
-    "cs 4780",
-    "cs 4820",
-    "cs 4320",
-]
+api_keys = json.loads(open(os.path.join(current_dir, "reddit_key.json")).read())
 
 
-def get_subreddit_data(submissions):
+def write_sql(post_data, comments_df, cursor):
+    res = cursor.execute(
+        """
+        INSERT INTO reddit_posts (subreddit, title, url, author, score, num_comments, created_utc, selftext, permalink)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        post_data,
+    )
+    comments_df["post_id"] = res.lastrowid
+    comments_df.to_sql("reddit_comments", conn, if_exists="append", index=False)
+    conn.commit()
+
+
+def get_subreddit_data(submissions, cursor=None):
     topics_dict = {
         "title": [],
         "score": [],
@@ -38,7 +46,16 @@ def get_subreddit_data(submissions):
         # print(f"submission from {submission.author}: {submission.title}")
         # print(submission.comments)
         comments_df = pd.DataFrame(
-            columns=["comment", "score", "username", "user_id", "created"], index=None
+            columns=[
+                "body",
+                "score",
+                "username",
+                "user_id",
+                "created_utc",
+                "permalink",
+                "subreddit",
+            ],
+            index=None,
         )
         # submission.comments.replace_more(limit=32)
         for comment in submission.comments.list():
@@ -65,34 +82,81 @@ def get_subreddit_data(submissions):
                 comment.score,
                 name,
                 id,
-                comment.created,
+                comment.created_utc,
+                comment.permalink,
+                "cornell",
             ]
             comments_df.sort_values(by="score", ascending=False)
         topics_dict["comments"] = comments_df.to_json(orient="split")
 
+        if cursor is not None:
+            write_sql(
+                # subreddit TEXT,
+                # title TEXT,
+                # url TEXT,
+                # author TEXT,
+                # score INTEGER,
+                # num_comments INTEGER,
+                # created_utc INTEGER,
+                # selftext TEXT,
+                # permalink TEXT,
+                (
+                    "cornell",
+                    submission.title,
+                    submission.url,
+                    submission.author.name,
+                    submission.score,
+                    submission.num_comments,
+                    submission.created_utc,
+                    submission.selftext,
+                    submission.permalink,
+                ),
+                comments_df,
+                cursor,
+            )
+
     return topics_dict
 
 
-def redditData(subreddit: str, search: str, limit: int):
+def redditData(subreddit: str, search: str, limit: int, cursor=None):
     reddit = praw.Reddit(
-        client_id=api_keys['client_id'],
-        client_secret=api_keys['client_secret'],
+        client_id=api_keys["client_id"],
+        client_secret=api_keys["client_secret"],
         user_agent="jji-bigg",
     )
     subreddit = reddit.subreddit("cornell")
 
-    return pd.DataFrame(get_subreddit_data(subreddit.search(search, limit=limit)))
+    return pd.DataFrame(
+        get_subreddit_data(subreddit.search(search, limit=limit), cursor=cursor)
+    )
 
 
 def generateCSVForReddit(
-    search, limit: int, subreddit: str = "cornell", fname: str = None
+    search, limit: int, subreddit: str = "cornell", fname: str = None, cursor=None
 ):
     if fname is None:
         fname = f"reddit/{search}.csv"
-    data = redditData(subreddit, search, limit)
+    data = redditData(subreddit, search, limit, cursor=cursor)
     data.to_csv(fname, index=False)
 
 
+def init_db(
+    db_path="roster_reviews.sqlite.db",
+    schema_path=os.path.join(current_dir, "schema.sql"),
+):
+    conn = sqlite3.connect(db_path)
+    with open(schema_path, "r") as f:
+        conn.executescript(f.read())
+    conn.commit()
+    return conn
+
+
+conn = init_db()
+cursor = conn.cursor()
+
+courses = cursor.execute("SELECT DISTINCT name FROM courses").fetchall()
+# print(courses)
+
 for course in courses:
-    generateCSVForReddit(course, 6)
+    generateCSVForReddit(course[0], 6, cursor=cursor)
     print(f"done with {course}")

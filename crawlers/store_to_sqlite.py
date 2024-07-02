@@ -93,6 +93,14 @@ def generateSQLForSemestersSubject(semester: str, subject: str):
                 course["dates"],
                 course["instructor"],
             )
+            # delete the previous records for the same course
+            cursor.execute(
+                """
+            DELETE FROM courses
+            WHERE semester = ? AND subject = ? AND name = ? AND type = ? AND section_number = ? AND location = ? AND days = ? AND time = ? AND dates = ? AND instructor = ?""",
+                course_data,
+            )
+
             cursor.execute(
                 """
             INSERT INTO courses (semester, subject, name, type, section_number, location, days, time, dates, instructor)

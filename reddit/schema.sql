@@ -18,9 +18,9 @@ CREATE TABLE IF NOT EXISTS reddit_posts (
 CREATE TABLE IF NOT EXISTS reddit_comments (
     comment_id INTEGER PRIMARY KEY AUTOINCREMENT,
     post_id INTEGER,
-    parent_id INTEGER,
     subreddit TEXT,
-    author TEXT,
+    username TEXT,
+    user_id TEXT,
     score INTEGER,
     created_utc INTEGER,
     body TEXT,
