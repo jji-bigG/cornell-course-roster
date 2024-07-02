@@ -31,7 +31,11 @@ class CourseDetails:
         return reqText
 
     def get_description(self):
-        return self.soup.find("p", class_="catalog-descr").text.strip()
+        fr = self.soup.find("p", class_="catalog-descr")
+        if fr:
+            return fr.text.strip()
+        else:
+            return "None"
 
     def get_prerequisites(self):
         fr = self.soup.find("span", class_="catalog-prereq")
