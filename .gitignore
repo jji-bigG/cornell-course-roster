@@ -1,4 +1,4 @@
-.DS_Store
+*.DS_Store
 
 # ignore the generated outputs; you can generate any time you want by running main.py
 FA*
@@ -17,3 +17,6 @@ netids.raw
 reddit/reddit_key.json
 
 *.env
+
+# Do not ignore the spiders directory
+!spiders/

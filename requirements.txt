@@ -1,5 +1,8 @@
-scrapy
+-i https://pypi.tuna.tsinghua.edu.cn/simple
+Scrapy
 requests
 beautifulsoup4
+lxml
 pandas
 praw
+sqlalchemy

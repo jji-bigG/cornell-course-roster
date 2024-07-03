@@ -1,0 +1,17 @@
+name: cornell_course_roster
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - python=3.11 # You can specify your desired Python version here
+  - scrapy
+  - requests
+  - beautifulsoup4
+  - lxml
+  - pandas
+  - sqlalchemy
+  - notebook # To support Jupyter notebooks
+  - ipykernel # To enable IPython kernel in Jupyter
+  - pip
+  - pip:
+      - praw
