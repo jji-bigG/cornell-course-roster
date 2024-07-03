@@ -1,7 +1,9 @@
 name: cornell_course_roster
 channels:
+  - https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main
+  - https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/free
   - defaults
-  - conda-forge
+  # - conda-forge
 dependencies:
   - python=3.11 # You can specify your desired Python version here
   - scrapy

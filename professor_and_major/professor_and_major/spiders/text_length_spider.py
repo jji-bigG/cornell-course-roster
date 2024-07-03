@@ -4,7 +4,9 @@ from bs4 import BeautifulSoup
 
 class TextLengthSpider(scrapy.Spider):
     name = "text_length_spider"
-    start_urls = ["http://example.com"]  # Add your target URLs here
+    start_urls = [
+        "https://dyson.cornell.edu/programs/undergraduate/academics/degree-requirements/"
+    ]  # Add your target URLs here
 
     def parse(self, response):
         soup = BeautifulSoup(response.text, "lxml")
