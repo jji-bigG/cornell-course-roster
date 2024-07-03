@@ -53,9 +53,7 @@ def insert_subjects(semester, subjects):
     conn.commit()
 
 
-def generateSQLForSemestersSubject(
-    semester: str, subject: str, conn=conn, cursor=cursor
-):
+def generateSQLForSemestersSubject(semester: str, subject: str, conn, cursor):
     print(f"Working on {semester} {subject}")
 
     # Check if the HTML file for the subject already exists, if not, fetch it

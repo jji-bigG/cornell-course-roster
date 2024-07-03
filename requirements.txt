@@ -1,0 +1,5 @@
+scrapy
+requests
+beautifulsoup4
+pandas
+praw

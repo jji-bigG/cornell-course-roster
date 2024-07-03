@@ -134,22 +134,32 @@ def redditData(subreddit: str, search: str, limit: int, cursor=None):
 
 
 def generateCSVForReddit(
-    search, limit: int, subreddit: str = "cornell", fname: str = None, cursor=None
+    search,
+    limit: int,
+    subreddit: str = "cornell",
+    fname: str = None,
+    cursor=None,
 ):
     if fname is None:
         fname = f"reddit/data/{search}.csv"
+    if os.path.exists(fname):
+        print(f"File {fname} already exists. Skipping.")
+        return
     data = redditData(subreddit, search, limit, cursor=cursor)
     data.to_csv(fname, index=False)
 
 
+# Initialize the database
 def init_db(
     db_path="roster_reviews.sqlite.db",
     schema_path=os.path.join(current_dir, "schema.sql"),
+    run_schema=False,
 ):
     conn = sqlite3.connect(db_path)
-    with open(schema_path, "r") as f:
-        conn.executescript(f.read())
-    conn.commit()
+    if run_schema:
+        with open(schema_path, "r") as f:
+            conn.executescript(f.read())
+        conn.commit()
     return conn
 
 
@@ -161,10 +171,10 @@ courses = cursor.execute("SELECT DISTINCT name FROM courses").fetchall()
 
 for course in courses:
     generateCSVForReddit(course[0], 6, cursor=cursor)
-    print(f"reddit: done with {course}")
+    print(f"reddit: done with course: {course}")
 
 professors = cursor.execute("SELECT DISTINCT name FROM courses").fetchall()
 
 for professor in professors:
     generateCSVForReddit(professor[0], 6, cursor=cursor)
-    print(f"reddit: done with {professor}")
+    print(f"reddit: done with professor: {professor}")
