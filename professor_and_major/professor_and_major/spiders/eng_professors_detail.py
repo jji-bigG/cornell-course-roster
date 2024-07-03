@@ -7,25 +7,27 @@ class EngProfessorsDetailSpider(scrapy.Spider):
     name = "eng_professors_detail"
     
     def start_requests(self) -> Iterable[scrapy.Request]:
-        with open("prof-list.json") as f:
+        with open("prof_list.json") as f:
             profs = json.load(f)
         for prof in profs:
             yield scrapy.Request(url=prof["url"], callback=self.parse)
 
     def parse(self, response):
         # Extracting professor's name
-        prof_name = response.css('div.columns.small-12.medium-8.small-order-2.medium-order-3 h1#nf-1561 span::text').get()
+        prof_name = response.css('div.columns.small-12.medium-8.small-order-2.medium-order-3 h1 span::text').get()
 
         # Extracting biography
         bio_section = response.css('section.section--faculty-detail.faculty-detail__biography')
         bio = ''
-        if bio_section.css('h2#nf-b-1561::text').get() == 'Biography':
+        if bio_section.css('h2::text').get() == 'Biography':
+            print('Biography section found')
             bio = ' '.join(bio_section.css('p::text').getall())
 
         # Extracting research interests
         research_interests_section = bio_section
         research_interests = []
-        if research_interests_section.css('h2#nf-b-1561::text').get() == 'Research Interests':
+        if research_interests_section.css('h2::text').get() == 'Research Interests':
+            print('Research interests section found')
             research_interests = [(a.css('::text').get(), a.css('::attr(href)').get()) for a in research_interests_section.css('ul li a')]
             research_interests.extend(research_interests_section.css('p::text').getall())
 
