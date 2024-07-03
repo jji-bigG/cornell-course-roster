@@ -21,12 +21,12 @@ class CourseDetails:
 
     def get_html(self):
         if os.path.exists(f"{self.semester}/details/{self.course_name}.html"):
-            with open(f"{self.semester}/{self.name_code}.html", "r") as f:
+            with open(f"{self.semester}/details/{self.course_name}.html", "r") as f:
                 reqText = f.read()
         else:
             reqText = requests.get(self.url).text
             os.makedirs(self.semester + "/details", exist_ok=True)
-            with open(f"{self.semester}/details/{self.name_code}.html", "w+") as f:
+            with open(f"{self.semester}/details/{self.course_name}.html", "w+") as f:
                 f.write(reqText)
         return reqText
 
@@ -145,6 +145,11 @@ def iterate_from_latest_to_oldest(cursor):
     seen_courses = set()
     for course in courses:
         if course[0] not in seen_courses:
+            # delete the previous instance
+            cursor.execute(
+                "DELETE FROM course_descriptions WHERE course_id = ?", (course[1],)
+            )
+
             cursor.execute(
                 "select semester from courses where name = ?",
                 (course[0],),
