@@ -12,6 +12,7 @@ netids.txt
 netids.raw
 
 *.csv
+*.json
 *.db
 
 reddit/reddit_key.json
