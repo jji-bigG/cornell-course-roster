@@ -122,7 +122,7 @@ def main():
     print(course.get_outcomes())
 
 
-def iterate_from_latest_to_oldest(cursor):
+def iterate_from_latest_to_oldest(cursor, conn):
     # given the cursor to our database, let's grab the course details for that course and store it in the database
     # if that course has multiple offerings in the db, we go for the latest of the course
 
@@ -194,6 +194,6 @@ if __name__ == "__main__":
     # Create a new SQLite database (or connect to an existing one)
     conn = sqlite3.connect("roster_reviews.sqlite.db")
     cursor = conn.cursor()
-    iterate_from_latest_to_oldest(cursor)
+    iterate_from_latest_to_oldest(cursor, conn)
 
     conn.close()

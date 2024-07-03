@@ -53,7 +53,9 @@ def insert_subjects(semester, subjects):
     conn.commit()
 
 
-def generateSQLForSemestersSubject(semester: str, subject: str):
+def generateSQLForSemestersSubject(
+    semester: str, subject: str, conn=conn, cursor=cursor
+):
     print(f"Working on {semester} {subject}")
 
     # Check if the HTML file for the subject already exists, if not, fetch it
@@ -108,7 +110,7 @@ def generateSQLForSemestersSubject(semester: str, subject: str):
 
 
 # Main process to go through all semesters and subjects
-def main():
+def get_course_roster_list(cursor, conn):
     url = "https://classes.cornell.edu/browse/roster/"
     for i in reversed(range(14, 25)):
         semesters = []
@@ -125,16 +127,17 @@ def main():
             if subjects:
                 insert_subjects(semester, subjects)
                 for subject in subjects:
-                    generateSQLForSemestersSubject(semester, subject)
+                    generateSQLForSemestersSubject(
+                        semester, subject, cursor=cursor, conn=conn
+                    )
 
-
-conn = init_db(run_schema=False)
-cursor = conn.cursor()
 
 if __name__ == "__main__":
     # Create a new SQLite database (or connect to an existing one)
-    # main()
-    iterate_from_latest_to_oldest(cursor)
+    conn = init_db(run_schema=False)
+    cursor = conn.cursor()
+    get_course_roster_list(cursor, conn)
+    iterate_from_latest_to_oldest(cursor, conn)
 
-# Close the database connection
-conn.close()
+    # Close the database connection
+    conn.close()
