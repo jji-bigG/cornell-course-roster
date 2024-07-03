@@ -64,7 +64,8 @@ ROBOTSTXT_OBEY = True
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {
     "roster_crawler_scrapy.pipelines.RosterCrawlerScrapyPipeline": 300,
-    "roster_crawler_scrapy.pipelines.SQLiteStorePipeline": 300,
+    # "roster_crawler_scrapy.pipelines.SQLiteStorePipeline": 300,
+    "roster_crawler_scrapy.pipelines.SQLitePipeline": 300,
 }
 
 # Enable and configure the AutoThrottle extension (disabled by default)
