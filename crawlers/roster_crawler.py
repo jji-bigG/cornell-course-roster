@@ -1,7 +1,6 @@
 # given a course subject filtered page,
 # crawl and pull down the list of course numbers, names, location, professors...
 
-import requests
 from bs4 import BeautifulSoup
 
 
@@ -95,10 +94,11 @@ class SubjectRoster:
             return "None"
 
     def findLocationFromClass(self, course: BeautifulSoup) -> str:
-        if course.find("a", class_="facility-search") is not None:
-            return course.find("a", class_="facility-search").contents[0]
+        fr = course.find("a", class_="facility-search")
+        if fr and fr.contents:
+            return fr.contents[0]
         else:
-            return "NONE"
+            return "None"
 
     def parseSectionsFromCourse(self, course: BeautifulSoup) -> list:
         # relevant information for each section
@@ -133,8 +133,8 @@ class SubjectRoster:
             self.sections.append(section)
 
 
-# with open('FA14/AAS.html', 'r+') as f:
-#     roster = SubjectRoster(f.read())
-#     roster.buildSections()
-#     print(len(roster.courses))
-#     print(roster.sections)
+with open("SP20/PE.html", "r+") as f:
+    roster = SubjectRoster(f.read())
+    roster.buildSections()
+    # print(len(roster.courses))
+    # print(roster.sections)

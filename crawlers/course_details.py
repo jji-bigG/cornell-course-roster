@@ -142,50 +142,53 @@ def iterate_from_latest_to_oldest(cursor):
         else:
             return year2 - year1
 
+    seen_courses = set()
     for course in courses:
-        cursor.execute(
-            "select semester from courses where name = ?",
-            (course[0],),
-        )
-        semesters = cursor.fetchall()
-        # sort the semesters using the rank_semester function
-        semesters = [s[0] for s in semesters]  # Convert to a list of strings
-        sorted_semesters = sorted(semesters, key=cmp_to_key(compare_semester))
-        latest_semester = sorted_semesters[0]  # The latest semester
-        # print(f"latest semester for course {course[0]} is ", latest_semester)
-        # now make the fetch for the course details
-        course_details = CourseDetails(latest_semester, course[0])
-        details = course_details.fetch()
-        print(details)
-        # write this to the sql database under the table course_details
-        cursor.execute(
-            """
-        INSERT INTO course_descriptions (course_id, title, description, prerequisites, when_offered, combined_with, distribution, credits, outcomes)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """,
-            (
-                course[1],
-                details["title"],
-                details["description"],
-                details["prerequisites"],
-                details["when_offered"],
-                details["combined_with"],
-                details["distribution"],
-                details["credits"],
-                str(details["outcomes"]),
-            ),
-        )
-        conn.commit()
+        if course[0] not in seen_courses:
+            cursor.execute(
+                "select semester from courses where name = ?",
+                (course[0],),
+            )
+            semesters = cursor.fetchall()
+            # sort the semesters using the rank_semester function
+            semesters = [s[0] for s in semesters]  # Convert to a list of strings
+            sorted_semesters = sorted(semesters, key=cmp_to_key(compare_semester))
+            latest_semester = sorted_semesters[0]  # The latest semester
+            # print(f"latest semester for course {course[0]} is ", latest_semester)
+            # now make the fetch for the course details
+            course_details = CourseDetails(latest_semester, course[0])
+            details = course_details.fetch()
+            # print(details)
+            # write this to the sql database under the table course_details
+            cursor.execute(
+                """
+            INSERT INTO course_descriptions (course_id, title, description, prerequisites, when_offered, combined_with, distribution, credits, outcomes)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+                (
+                    course[1],
+                    details["title"],
+                    details["description"],
+                    details["prerequisites"],
+                    details["when_offered"],
+                    details["combined_with"],
+                    details["distribution"],
+                    details["credits"],
+                    str(details["outcomes"]),
+                ),
+            )
+            conn.commit()
+            seen_courses.add(course[0])
+            print(f"Stored course details for {course[0]} in the database")
 
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
 
-# Create a new SQLite database (or connect to an existing one)
-conn = sqlite3.connect("roster_reviews.sqlite.db")
-cursor = conn.cursor()
-
 if __name__ == "__main__":
+    # Create a new SQLite database (or connect to an existing one)
+    conn = sqlite3.connect("roster_reviews.sqlite.db")
+    cursor = conn.cursor()
     iterate_from_latest_to_oldest(cursor)
 
-conn.close()
+    conn.close()

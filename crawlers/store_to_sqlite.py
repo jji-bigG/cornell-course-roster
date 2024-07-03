@@ -16,17 +16,14 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 def init_db(
     db_path="roster_reviews.sqlite.db",
     schema_path=os.path.join(current_dir, "schema.sql"),
+    run_schema=False,
 ):
     conn = sqlite3.connect(db_path)
-    with open(schema_path, "r") as f:
-        conn.executescript(f.read())
-    conn.commit()
+    if run_schema:
+        with open(schema_path, "r") as f:
+            conn.executescript(f.read())
+        conn.commit()
     return conn
-
-
-# Create a new SQLite database (or connect to an existing one)
-conn = init_db()
-cursor = conn.cursor()
 
 
 def subjectIDs(url, semester):
@@ -131,8 +128,12 @@ def main():
                     generateSQLForSemestersSubject(semester, subject)
 
 
+conn = init_db(run_schema=False)
+cursor = conn.cursor()
+
 if __name__ == "__main__":
-    main()
+    # Create a new SQLite database (or connect to an existing one)
+    # main()
     iterate_from_latest_to_oldest(cursor)
 
 # Close the database connection

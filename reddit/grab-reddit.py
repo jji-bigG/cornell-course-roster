@@ -54,6 +54,7 @@ def get_subreddit_data(submissions, cursor=None):
                 "created_utc",
                 "permalink",
                 "subreddit",
+                "parent_id",
             ],
             index=None,
         )
@@ -85,6 +86,7 @@ def get_subreddit_data(submissions, cursor=None):
                 comment.created_utc,
                 comment.permalink,
                 "cornell",
+                comment.parent_id,
             ]
             comments_df.sort_values(by="score", ascending=False)
         topics_dict["comments"] = comments_df.to_json(orient="split")
@@ -135,7 +137,7 @@ def generateCSVForReddit(
     search, limit: int, subreddit: str = "cornell", fname: str = None, cursor=None
 ):
     if fname is None:
-        fname = f"reddit/{search}.csv"
+        fname = f"reddit/data/{search}.csv"
     data = redditData(subreddit, search, limit, cursor=cursor)
     data.to_csv(fname, index=False)
 
@@ -159,4 +161,10 @@ courses = cursor.execute("SELECT DISTINCT name FROM courses").fetchall()
 
 for course in courses:
     generateCSVForReddit(course[0], 6, cursor=cursor)
-    print(f"done with {course}")
+    print(f"reddit: done with {course}")
+
+professors = cursor.execute("SELECT DISTINCT name FROM courses").fetchall()
+
+for professor in professors:
+    generateCSVForReddit(professor[0], 6, cursor=cursor)
+    print(f"reddit: done with {professor}")
