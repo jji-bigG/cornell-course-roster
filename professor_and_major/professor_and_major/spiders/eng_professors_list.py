@@ -17,7 +17,7 @@ class EngProfessorsListSpider(scrapy.Spider):
         )
 
         for card in cards:
-            yield {
+            vals = {
                 "url": card.xpath(
                     './/div[contains(@class, "faculty-pic columns small-12 medium-12 large-12")]//a/@href'
                 ).get(),
@@ -42,4 +42,14 @@ class EngProfessorsListSpider(scrapy.Spider):
                 "position": card.xpath(
                     './/div[contains(@class, "person__position")]/text()'
                 ).get(),
+            }
+            yield {
+                "prof_name": vals["prof_name"].strip() if vals["prof_name"] else None,
+                "url": vals["url"].strip() if vals["url"] else None,
+                "prof_img": vals["prof_img"].strip() if vals["prof_img"] else None,
+                "department": vals["department"].strip() if vals["department"] else None,
+                "phone": vals["phone"].strip() if vals["phone"] else None,
+                "location": vals["location"].strip() if vals["location"] else None,
+                "email": vals["email"].strip() if vals["email"] else None,
+                "position": vals["position"].strip() if vals["position"] else None,
             }
