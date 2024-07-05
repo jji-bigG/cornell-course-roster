@@ -35,6 +35,8 @@ def extract_cards(cards, section):
         card_data = {}
         a = card.find("a", class_="link")
         card_data["title"] = a.get_text()
+        if a["href"].startswith("/"):
+            a["href"] = "https://cals.cornell.edu" + a["href"]
         card_data["url"] = a["href"]
 
         front = card.find("div", class_="degree-card-front")
