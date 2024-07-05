@@ -2,6 +2,7 @@
 import ratemyprofessor
 import sqlite3
 import json
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 conn = sqlite3.connect("roster_reviews.sqlite.db")
 c = conn.cursor()
@@ -9,15 +10,10 @@ c = conn.cursor()
 professors = c.execute("SELECT DISTINCT instructor FROM courses").fetchall()
 professors = sorted(professors, key=len)[1:]
 
-f = open("professor_reviews.jsonl", "a+")
-
-# cornell = ratemyprofessor.get_schools_by_name("Cornell University")
-# print([c.id for c in cornell])
-# print([c.name for c in cornell])
 cornell = ratemyprofessor.School(298)
-# print(cornell.name)
 
-for prof in professors:
+
+def fetch_professor_data(prof):
     prof = prof[0].split(" (")[0]
     print(prof)
     profs = ratemyprofessor.get_professors_by_school_and_name(cornell, prof)
@@ -58,35 +54,24 @@ for prof in professors:
                     "online_class": r.online_class,
                     "credit": r.credit,
                     "attendance_mandatory": r.attendance_mandatory,
-                    #  :param rating: The rating number.
-                    # :param difficulty: The difficulty rating.
-                    # :param comment: The rating comment.
-                    # :param class_name: The class the rating was for.
-                    # :param date: The date the rating was made.
-                    # :param take_again: If the person who made the rating would take the class again, if any
-                    # :param grade: The grade of the person who made the rating, if any
-                    # :param thumbs_up: The number of thumbs up for the rating
-                    # :param thumbs_down: The number of thumbs down for the rating
-                    # :param online_class: If the rating is for an online class, if any
-                    # :param credit: If the rating was for credit, if any
-                    # :param attendance_mandatory: If attendance was mandatory for the class, if any
                 }
             )
         data["ratings"] = ratings
         professor_data.append(data)
-    f.write(json.dumps({prof: professor_data}) + "\n")
-    # break
+    return {prof: professor_data}
 
 
-# profs = ratemyprofessor.get_professors_by_school_and_name(
-#     cornell, "A.J. Edwards (aje45)"
-# )
-# print([(prof.id, prof.name, prof.rating, prof.school) for prof in profs])
+# Number of parallel tasks
+num_parallel_tasks = 5
 
-# ['courses', 'department', 'difficulty', 'get_ratings', 'id', 'name', 'num_ratings', 'rating', 'school', 'would_take_again']
+# Open the file to write the output
+with open("professor_data.jsonl", "w") as f:
+    # Create a ThreadPoolExecutor
+    with ThreadPoolExecutor(max_workers=num_parallel_tasks) as executor:
+        # Submit tasks to the executor
+        futures = [executor.submit(fetch_professor_data, prof) for prof in professors]
 
-# prof_ratings = prof.get_ratings()
-
-# for r in prof_ratings:
-#     print(r.class_name, r.rating, r.difficulty, r.date, r.comment)
-f.close()
+        # As the tasks complete, write their results to the file
+        for future in as_completed(futures):
+            result = future.result()
+            f.write(json.dumps(result) + "\n")
