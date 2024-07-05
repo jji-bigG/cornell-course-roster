@@ -4,6 +4,7 @@
 FA*/
 SU*/
 SP*/
+html*/
 
 __pycache__
 *.pyc
@@ -13,6 +14,7 @@ netids.raw
 
 *.csv
 *.json
+*.jsonl
 *.db
 
 reddit/reddit_key.json
