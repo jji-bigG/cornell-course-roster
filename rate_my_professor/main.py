@@ -75,3 +75,5 @@ with open("professor_data.jsonl", "w") as f:
         for future in as_completed(futures):
             result = future.result()
             f.write(json.dumps(result) + "\n")
+
+conn.close()
