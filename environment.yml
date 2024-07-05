@@ -17,3 +17,5 @@ dependencies:
   - pip
   - pip:
       - praw
+      - selenium
+      - RateMyProfessorAPI
