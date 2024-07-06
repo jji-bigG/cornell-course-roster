@@ -12,6 +12,44 @@ professors = sorted(professors, key=len)[1:]
 
 cornell = ratemyprofessor.School(298)
 
+fr = open("professor_data.jsonl", "r")
+
+QUERIED_PROFESSORS = set()  # from the previous runs; name from the sqlite db
+for l in fr.readlines():
+    p = [x for x in json.loads(l).keys()][0]
+    QUERIED_PROFESSORS.add(p)
+
+# print(QUERIED_PROFESSORS)
+fr.close()
+
+SEEN_PROFESSORS_IDs = set()  # id are the RMP id's
+
+professors = set(professors)
+professors -= QUERIED_PROFESSORS
+
+
+def fetch_ratings(p):
+    prof_ratings = p.get_ratings()
+    ratings = []
+    for r in prof_ratings:
+        ratings.append(
+            {
+                "class_name": r.class_name,
+                "rating": r.rating,
+                "difficulty": r.difficulty,
+                "comment": r.comment,
+                "date": r.date.strftime("%Y-%m-%d"),
+                "take_again": r.take_again,
+                "grade": r.grade,
+                "thumbs_up": r.thumbs_up,
+                "thumbs_down": r.thumbs_down,
+                "online_class": r.online_class,
+                "credit": r.credit,
+                "attendance_mandatory": r.attendance_mandatory,
+            }
+        )
+    return ratings
+
 
 def fetch_professor_data(prof):
     prof = prof[0].split(" (")[0]
@@ -37,26 +75,9 @@ def fetch_professor_data(prof):
                 for c in p.courses
             ],
         }
-        prof_ratings = p.get_ratings()
-        ratings = []
-        for r in prof_ratings:
-            ratings.append(
-                {
-                    "class_name": r.class_name,
-                    "rating": r.rating,
-                    "difficulty": r.difficulty,
-                    "comment": r.comment,
-                    "date": r.date.strftime("%Y-%m-%d"),
-                    "take_again": r.take_again,
-                    "grade": r.grade,
-                    "thumbs_up": r.thumbs_up,
-                    "thumbs_down": r.thumbs_down,
-                    "online_class": r.online_class,
-                    "credit": r.credit,
-                    "attendance_mandatory": r.attendance_mandatory,
-                }
-            )
-        data["ratings"] = ratings
+        if p.id in SEEN_PROFESSORS_IDs:
+            data["ratings"] = fetch_ratings(p)
+            SEEN_PROFESSORS_IDs.add(p.id)
         professor_data.append(data)
     return {prof: professor_data}
 
@@ -65,7 +86,8 @@ def fetch_professor_data(prof):
 num_parallel_tasks = 5
 
 # Open the file to write the output
-with open("professor_data.jsonl", "w") as f:
+
+with open("professor_data.jsonl", "a") as f:
     # Create a ThreadPoolExecutor
     with ThreadPoolExecutor(max_workers=num_parallel_tasks) as executor:
         # Submit tasks to the executor
