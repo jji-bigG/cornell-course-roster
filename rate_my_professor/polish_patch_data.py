@@ -12,7 +12,15 @@ saved_ids = set()
 
 cornell = ratemyprofessor.School(298)
 
-f_ratings = open("ratings.jsonl", "w")
+saved_ratings = set()
+f_ratings = open("ratings.jsonl", "r")
+for line in f_ratings.readlines():
+    saved_ratings.add(json.loads(line)["id"])
+f_ratings.close()
+
+print(f"resuming with {len(saved_ratings)} saved ratings")
+
+f_ratings = open("ratings.jsonl", "a")
 
 
 def check_belong_school(prof_id, school_id):
@@ -24,15 +32,18 @@ with open("professor_data.jsonl", "r") as f:
     for line in f.readlines():
         saved_profs = json.loads(line)
         for prof in saved_profs[list(saved_profs.keys())[0]]:
-            seen_ids.add(prof["id"])
-            if "ratings" in prof:
-                fetched_ids.add(prof["id"])
-                if prof["id"] not in saved_ids and check_belong_school(prof["id"], 298):
-                    f_ratings.write(json.dumps(prof) + "\n")
-                    saved_ids.add(prof["id"])
-                    print(f"rating processed for {prof['name']}")
-            else:
-                unfetched_ids.add(prof["id"])
+            if prof["id"] not in saved_ratings:
+                seen_ids.add(prof["id"])
+                if "ratings" in prof:
+                    fetched_ids.add(prof["id"])
+                    if prof["id"] not in saved_ids and check_belong_school(
+                        prof["id"], 298
+                    ):
+                        f_ratings.write(json.dumps(prof) + "\n")
+                        saved_ids.add(prof["id"])
+                        print(f"rating processed for {prof['name']}")
+                else:
+                    unfetched_ids.add(prof["id"])
 
 f_ratings.close()
 # print(
