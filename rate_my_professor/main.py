@@ -15,17 +15,26 @@ cornell = ratemyprofessor.School(298)
 fr = open("professor_data.jsonl", "r")
 
 QUERIED_PROFESSORS = set()  # from the previous runs; name from the sqlite db
+SEEN_PROFESSORS_IDs = set()  # id are the RMP id's
+
 for l in fr.readlines():
-    p = [x for x in json.loads(l).keys()][0]
+    saved_profs = json.loads(l)
+    p = [x for x in saved_profs.keys()][0]
     QUERIED_PROFESSORS.add(p)
+    for prof in saved_profs[p]:
+        if "ratings" in prof:
+            SEEN_PROFESSORS_IDs.add(prof["id"])
+
 
 # print(QUERIED_PROFESSORS)
 fr.close()
 
-SEEN_PROFESSORS_IDs = set()  # id are the RMP id's
 
-professors = set(professors)
+professors = set([prof[0].split(" (")[0] for prof in professors])
 professors -= QUERIED_PROFESSORS
+
+print(f"Total professors to query: {len(professors)}")
+print(professors)
 
 
 def fetch_ratings(p):
@@ -52,12 +61,14 @@ def fetch_ratings(p):
 
 
 def fetch_professor_data(prof):
-    prof = prof[0].split(" (")[0]
-    print(prof)
+    # print(prof)
     profs = ratemyprofessor.get_professors_by_school_and_name(cornell, prof)
     print(f"Found {len(profs)} professors for {prof}")
     professor_data = []
     for p in profs:
+        if p.school.id != 298:
+            print(f"not a cornell professor for {p.name} under search for {prof}")
+            continue
         data = {
             "id": p.id,
             "name": p.name,
@@ -66,6 +77,7 @@ def fetch_professor_data(prof):
             "num_ratings": p.num_ratings,
             "would_take_again": p.would_take_again,
             "department": p.department,
+            "school": p.school.name,
             "courses": [
                 {
                     "name": c.name,
@@ -75,7 +87,7 @@ def fetch_professor_data(prof):
                 for c in p.courses
             ],
         }
-        if p.id in SEEN_PROFESSORS_IDs:
+        if p.id not in SEEN_PROFESSORS_IDs:
             data["ratings"] = fetch_ratings(p)
             SEEN_PROFESSORS_IDs.add(p.id)
         professor_data.append(data)
@@ -83,7 +95,7 @@ def fetch_professor_data(prof):
 
 
 # Number of parallel tasks
-num_parallel_tasks = 5
+num_parallel_tasks = 15
 
 # Open the file to write the output
 
