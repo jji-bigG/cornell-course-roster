@@ -6,7 +6,7 @@ class EngProfessorsDetailSpider(scrapy.Spider):
     name = "eng_professors_detail"
 
     def start_requests(self):
-        with open(input("Prof list file path: ")) as f:
+        with open("eng-prof-list.json") as f:
             profs = json.load(f)
         for prof in profs:
             yield scrapy.Request(url=prof["url"], callback=self.parse)
@@ -26,11 +26,16 @@ class EngProfessorsDetailSpider(scrapy.Spider):
             bio = " ".join(bio_section.css("p::text").getall())
 
         # Extracting research interests
-        research_interests_section = bio_section
+        research_interests_section = response.xpath(
+            "(//section[@class='section--faculty-detail faculty-detail__biography'])[2]"
+        )
         research_interests = []
-        if research_interests_section.css("h2::text").get() == "Research Interests":
+        if (
+            research_interests_section
+            and research_interests_section.css("h2::text").get() == "Research Interests"
+        ):
             research_interests = [
-                (a.css("::text").get(), a.css("::attr(href)").get())
+                {"text": a.css("::text").get(), "link": a.css("::attr(href)").get()}
                 for a in research_interests_section.css("ul li a")
             ]
             research_interests.extend(
@@ -60,7 +65,9 @@ class EngProfessorsDetailSpider(scrapy.Spider):
         education_section = response.css(
             "section.section--faculty-detail.faculty-detail__education"
         )
-        education = education_section.css("ul li::text").getall()
+        education = []
+        if education_section:
+            education = education_section.css("p::text").getall()
 
         # Extracting in the news articles
         in_the_news_articles = response.css("article")

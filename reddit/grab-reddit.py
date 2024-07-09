@@ -7,7 +7,7 @@ import json
 import sqlite3
 import os
 
-from concurrent.futures import ThreadPoolExecutor, as_completed
+# from concurrent.futures import ThreadPoolExecutor, as_completed
 
 current_dir = os.path.dirname(os.path.realpath(__file__))
 

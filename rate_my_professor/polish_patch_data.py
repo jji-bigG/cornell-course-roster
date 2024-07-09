@@ -5,6 +5,8 @@ import json
 import sqlite3
 import ratemyprofessor
 
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
 seen_ids = set()
 fetched_ids = set()
 unfetched_ids = set()
