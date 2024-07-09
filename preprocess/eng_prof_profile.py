@@ -70,11 +70,24 @@ eng_profs_list = pd.read_json("eng-prof-list.json")
 
 
 async def main():
+    fr = open("llm_eng_professor_profiles.jsonl", "r")
+    seen_profs = set()
+    for line in fr:
+        data = json.loads(line)
+        seen_profs.add(data["prof"])
+    fr.close()
     f = open("llm_eng_professor_profiles.jsonl", "a")
 
     for prof in eng_profs_list["prof_name"]:
+        if prof in seen_profs:
+            print(f"Skipping {prof}: Already seen")
+            continue
         prof_description = eng_profs_list[eng_profs_list["prof_name"] == prof]
-        prof_details = eng_profs[eng_profs["prof_name"] == prof].iloc[0]
+        matched = eng_profs[eng_profs["prof_name"] == prof]
+        if matched.empty:
+            print(f"Could not find profile for {prof}")
+            continue
+        prof_details = matched.iloc[0]
         # print(prof_details)
         # break
         prompt = EXTRACT_FACULTY_PROMPT.format(

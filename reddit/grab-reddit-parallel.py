@@ -1,20 +1,17 @@
-# scrap reddit data from r/cornell
-
+import os
+import sqlite3
+import json
 import praw
 import pandas as pd
-
-import json
-import sqlite3
-import os
-
-# from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import ThreadPoolExecutor
 
 current_dir = os.path.dirname(os.path.realpath(__file__))
 
 api_keys = json.loads(open(os.path.join(current_dir, "reddit_key.json")).read())
 
 
-def write_sql(post_data, comments_df, cursor):
+def write_sql(post_data, comments_df, conn):
+    cursor = conn.cursor()
     res = cursor.execute(
         """
         INSERT INTO reddit_posts (subreddit, title, url, author, score, num_comments, created_utc, selftext, permalink)
@@ -27,7 +24,7 @@ def write_sql(post_data, comments_df, cursor):
     conn.commit()
 
 
-def get_subreddit_data(submissions, cursor=None):
+def get_subreddit_data(submissions, conn=None):
     topics_dict = {
         "title": [],
         "score": [],
@@ -45,8 +42,7 @@ def get_subreddit_data(submissions, cursor=None):
         topics_dict["num_comments"].append(submission.num_comments)
         topics_dict["created"].append(submission.created)
         topics_dict["body"].append(submission.selftext)
-        # print(f"submission from {submission.author}: {submission.title}")
-        # print(submission.comments)
+
         comments_df = pd.DataFrame(
             columns=[
                 "body",
@@ -60,14 +56,9 @@ def get_subreddit_data(submissions, cursor=None):
             ],
             index=None,
         )
-        # submission.comments.replace_more(limit=32)
         for comment in submission.comments.list():
             if isinstance(comment, praw.models.MoreComments):
-                print(f"more comments: {comment.body}")
                 continue
-            # topics_dict["comment"].append(comment.body)
-            # else: continue
-            # print(f"comment ({comment.score}) from {comment.author}: {comment.body}\n")
 
             if comment.author is None:
                 id = "[deleted]"
@@ -76,6 +67,7 @@ def get_subreddit_data(submissions, cursor=None):
                 hasattr(comment.author, "is_suspended") and comment.author.is_suspended
             ):
                 id = "[suspended]"
+                name = "[suspended]"
             else:
                 id = comment.author.id
                 name = comment.author.name
@@ -93,17 +85,8 @@ def get_subreddit_data(submissions, cursor=None):
             comments_df.sort_values(by="score", ascending=False)
         topics_dict["comments"] = comments_df.to_json(orient="split")
 
-        if cursor is not None:
+        if conn is not None:
             write_sql(
-                # subreddit TEXT,
-                # title TEXT,
-                # url TEXT,
-                # author TEXT,
-                # score INTEGER,
-                # num_comments INTEGER,
-                # created_utc INTEGER,
-                # selftext TEXT,
-                # permalink TEXT,
                 (
                     "cornell",
                     submission.title,
@@ -116,13 +99,13 @@ def get_subreddit_data(submissions, cursor=None):
                     submission.permalink,
                 ),
                 comments_df,
-                cursor,
+                conn,
             )
 
     return topics_dict
 
 
-def redditData(subreddit: str, search: str, limit: int, cursor=None):
+def redditData(subreddit: str, search: str, limit: int, conn=None):
     reddit = praw.Reddit(
         client_id=api_keys["client_id"],
         client_secret=api_keys["client_secret"],
@@ -131,16 +114,16 @@ def redditData(subreddit: str, search: str, limit: int, cursor=None):
     subreddit = reddit.subreddit("cornell")
 
     return pd.DataFrame(
-        get_subreddit_data(subreddit.search(search, limit=limit), cursor=cursor)
+        get_subreddit_data(subreddit.search(search, limit=limit), conn=conn)
     )
 
 
 def generateCSVForReddit(
     search,
     limit: int,
+    db_path="roster_reviews.sqlite.db",
     subreddit: str = "cornell",
     fname: str = None,
-    cursor=None,
 ):
     if fname is None:
         fname = f"reddit/data/{search}.csv"
@@ -148,14 +131,15 @@ def generateCSVForReddit(
         print(f"File {fname} already exists. Skipping.")
         return
     try:
-        data = redditData(subreddit, search, limit, cursor=cursor)
+        conn = sqlite3.connect(db_path, check_same_thread=False)
+        data = redditData(subreddit, search, limit, conn=conn)
         data.to_csv(fname, index=False)
+        conn.close()
     except Exception as e:
         print(f"Error: {e}")
         return None
 
 
-# Initialize the database
 def init_db(
     db_path="roster_reviews.sqlite.db",
     schema_path=os.path.join(current_dir, "schema.sql"),
@@ -169,41 +153,50 @@ def init_db(
     return conn
 
 
-conn = init_db()
-cursor = conn.cursor()
+def main():
+    db_path = "roster_reviews.sqlite.db"
+    conn = init_db(db_path)
+    cursor = conn.cursor()
 
-NUM_PARALLEL_TASKS = 6
-NUM_TOP_POSTS = 10
+    NUM_TOP_POSTS = 10
 
-courses = set(
-    sorted(
-        [c[0] for c in cursor.execute("SELECT DISTINCT name FROM courses").fetchall()],
-        key=lambda x: len(x[0]),
+    courses = set(
+        sorted(
+            [
+                c[0]
+                for c in cursor.execute("SELECT DISTINCT name FROM courses").fetchall()
+            ],
+            key=lambda x: len(x[0]),
+        )
     )
-)
-# print(courses)
 
-for course in courses:
-    generateCSVForReddit(course, NUM_TOP_POSTS, cursor=cursor)
-    print(f"reddit: done with course: {course}")
-
-professors = set(
-    sorted(
-        [
-            p[0]
-            for p in cursor.execute(
-                "SELECT DISTINCT instructors FROM courses"
-            ).fetchall()
-        ],
-        key=lambda x: len(x[0]),
+    professors = set(
+        sorted(
+            [
+                p[0]
+                for p in cursor.execute(
+                    "SELECT DISTINCT instructor FROM courses"
+                ).fetchall()
+            ],
+            key=lambda x: len(x[0]),
+        )
     )
-)
 
-for professor in professors:
-    generateCSVForReddit(professor, NUM_TOP_POSTS, cursor=cursor)
-    print(f"reddit: done with professor: {professor}")
+    conn.close()
 
-# with ThreadPoolExecutor(max_workers=NUM_PARALLEL_TASKS) as executor:
-#     for professor in professors:
-#         executor.submit(generateCSVForReddit, professor, NUM_TOP_POSTS, cursor=cursor)
-# print(f"reddit: done with professor: {professor}")
+    with ThreadPoolExecutor(max_workers=1) as executor:
+        professor_futures = [
+            executor.submit(generateCSVForReddit, professor, NUM_TOP_POSTS, db_path)
+            for professor in professors
+        ]
+        course_futures = [
+            executor.submit(generateCSVForReddit, course, NUM_TOP_POSTS, db_path)
+            for course in courses
+        ]
+
+        for future in professor_futures + course_futures:
+            future.result()
+
+
+if __name__ == "__main__":
+    main()
