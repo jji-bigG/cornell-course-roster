@@ -11,8 +11,8 @@ overall difficulty: {overall_difficulty}
 
 ### INSTRUCTIONS
 From the above reviews, please extract the following:
-"positive": What are some positive aspects of the professor based on the reviews? This should be a list of strings.
-"negative": list of strings.
+"positive": What are some positive aspects of the professor based on the reviews? This should be a list of strings each under 20 words. short phrases or sentences suffice as long as it captures the essential meaning of these reviews.
+"negative": list of strings each of length under 20 words. short phrases or sentences suffice as long as it captures the essential meaning of these reviews.
 "others": other attributes that are not positive or negative. This should be a list of strings.
 "summary": in one or two sentences, summarize the professor based on the reviews. If mixed reviews, summarize both sides, do not mention it is mixed reviews.
 
@@ -20,6 +20,7 @@ From the above reviews, please extract the following:
 Do not make up any information, only strictly based on the professor reviews. Output less than 3 attributes if there is not enough relevant information to be classified into that category.
 If there is not enough information to extract these information, output "[]" as an empty JSON list.
 JSON output must be compatible and must begin with {{ and end with }} so that python's json.loads can parse it.
+No escape character is needed for ', and wrap string with double quotes.
 
 ### JSON DATA EXTRACTED FROM REVIEWS (beginning with {{ and ending with }}):
 """
@@ -55,7 +56,7 @@ import pandas as pd
 
 
 async def main():
-    f = open("llm_professor_reviews.json", "a")
+    f = open("llm_professor_reviews.jsonl", "a")
 
     ratings_df = pd.read_json("ratings.jsonl", lines=True)
     for i in range(len(ratings_df)):
@@ -82,8 +83,16 @@ async def main():
         response = await chat(prompt)
         print(response)
         response = json.loads(response)
-        f.write(json.dumps(response))
-        f.write("\n")
+        f.write(
+            json.dumps(
+                {
+                    "professor": str(ratings_df.iloc[i]["name"]),
+                    "rmp_id": int(ratings_df.iloc[i]["id"]),
+                    "response": response,
+                }
+            )
+            + "\n"
+        )
         print(f'Processed {i + 1}/{len(ratings_df)}: {ratings_df.iloc[i]["name"]}')
 
     f.close()
