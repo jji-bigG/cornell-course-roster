@@ -145,8 +145,12 @@ def generateCSVForReddit(
     if os.path.exists(fname):
         print(f"File {fname} already exists. Skipping.")
         return
-    data = redditData(subreddit, search, limit, cursor=cursor)
-    data.to_csv(fname, index=False)
+    try:
+        data = redditData(subreddit, search, limit, cursor=cursor)
+        data.to_csv(fname, index=False)
+    except Exception as e:
+        print(f"Error: {e}")
+        return None
 
 
 # Initialize the database
@@ -166,15 +170,30 @@ def init_db(
 conn = init_db()
 cursor = conn.cursor()
 
-courses = cursor.execute("SELECT DISTINCT name FROM courses").fetchall()
+courses = set(
+    sorted(
+        [c[0] for c in cursor.execute("SELECT DISTINCT name FROM courses").fetchall()],
+        key=lambda x: len(x[0]),
+    )
+)
 # print(courses)
 
 for course in courses:
-    generateCSVForReddit(course[0], 6, cursor=cursor)
+    generateCSVForReddit(course, 6, cursor=cursor)
     print(f"reddit: done with course: {course}")
 
-professors = cursor.execute("SELECT DISTINCT name FROM courses").fetchall()
+professors = set(
+    sorted(
+        [
+            p[0]
+            for p in cursor.execute(
+                "SELECT DISTINCT instructors FROM courses"
+            ).fetchall()
+        ],
+        key=lambda x: len(x[0]),
+    )
+)
 
 for professor in professors:
-    generateCSVForReddit(professor[0], 6, cursor=cursor)
+    generateCSVForReddit(professor, 6, cursor=cursor)
     print(f"reddit: done with professor: {professor}")
