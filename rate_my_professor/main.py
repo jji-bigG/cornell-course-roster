@@ -8,6 +8,7 @@ conn = sqlite3.connect("roster_reviews.sqlite.db")
 c = conn.cursor()
 
 professors = c.execute("SELECT DISTINCT instructor FROM courses").fetchall()
+conn.close()
 professors = sorted(professors, key=len)[1:]
 
 cornell = ratemyprofessor.School(298)
@@ -95,7 +96,7 @@ def fetch_professor_data(prof):
 
 
 # Number of parallel tasks
-num_parallel_tasks = 15
+num_parallel_tasks = 30
 
 # Open the file to write the output
 
@@ -109,5 +110,3 @@ with open("professor_data.jsonl", "a") as f:
         for future in as_completed(futures):
             result = future.result()
             f.write(json.dumps(result) + "\n")
-
-conn.close()

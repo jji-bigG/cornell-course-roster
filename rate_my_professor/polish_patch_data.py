@@ -38,12 +38,11 @@ with open("professor_data.jsonl", "r") as f:
                 seen_ids.add(prof["id"])
                 if "ratings" in prof:
                     fetched_ids.add(prof["id"])
-                    if prof["id"] not in saved_ids and check_belong_school(
-                        prof["id"], 298
-                    ):
-                        f_ratings.write(json.dumps(prof) + "\n")
-                        saved_ids.add(prof["id"])
-                        print(f"rating processed for {prof['name']}")
+                    if prof["id"] not in saved_ids:
+                        if check_belong_school(prof["id"], 298):
+                            f_ratings.write(json.dumps(prof) + "\n")
+                            saved_ids.add(prof["id"])
+                            print(f"rating processed for {prof['name']}")
                 else:
                     unfetched_ids.add(prof["id"])
 
