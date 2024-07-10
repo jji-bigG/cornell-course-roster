@@ -10,7 +10,7 @@ EXTRACT_MAJOR_REQUIREMENTS_PROMPT = """
 ### OUTCOMES
 {outcomes}
 
-### OTHER INFORMATION for your reference (do not extract from these)
+### OTHER INFORMATION for your reference (they are NOT output fields, but may be helpful for your analysis)
 to better get an idea of where this studies would concentrate on, here are some more information that may or may not be helpful. Take it with a grain of salt when analyzing the data.
 sample_classes: {sample_classes}
 related_disciplines: {related_disciplines}
@@ -20,7 +20,7 @@ associated_interests: {associated_interests}
 BELOW ARE THE FIELDS THAT NEED TO BE EXTRACTED. IF THE INFORMATION IS NOT AVAILABLE, OUTPUT EMPTY STRINGS OR EMPTY LISTS. DO NOT MAKE ANY EDUCATED GUESS ON PURELY THE TITLE!
 - description: output a LIST of short and concise string capturing the DESCRIPTION section. This can but not limited to include what works are expected, what are covered, what are the goals of this study... 2-5 short sentences suffice
 - outcomes: output a LIST of short and concise string capturing the OUTCOMES section. This can but not limited to include what can you achieve, where does this enable you to work in, is there anything that this major allows you to achieve, how does this study benefit you in terms of academic & career & personal growth goals... 2-5 short sentences suffice
-- requirements: output a LIST of short and concise string capturing the REQUIREMENTS section. This can but not limited to include what are the requirements, what are the perceived prerequisites, what are the core courses... 2-5 short sentences suffice
+- requirements: output a LIST of short and concise string capturing the REQUIREMENTS section. This can but not limited to include what are the requirements, what are the perceived prerequisites, what are the core courses... YOU MUST INCLUDE THIS SECTION. MAKE IT UP IF NECESSARY
 using the above information, output a comprehensive JSON data that can be used for further analysis and recommendation.
 
 ### OUTPUT REQUIREMENTS

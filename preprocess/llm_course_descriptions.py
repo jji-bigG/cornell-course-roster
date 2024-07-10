@@ -38,6 +38,7 @@ No escape character is needed for ', and wrap string with double quotes.
 
 import pandas as pd
 import sqlite3
+import json
 
 conn = sqlite3.connect("roster_reviews.sqlite.db")
 
@@ -65,7 +66,6 @@ course_descriptions_df = course_descriptions_df.loc[
 courses_df = courses_df.loc[~courses_df["course_id"].isin(seen_courses)]
 
 from openai import AsyncOpenAI
-import json
 
 
 client = AsyncOpenAI(
@@ -133,7 +133,7 @@ async def process_row(row, f, semaphore):
 
 
 async def main():
-    semaphore = asyncio.Semaphore(3)  # Limit concurrent tasks to 3
+    semaphore = asyncio.Semaphore(5)  # Limit concurrent tasks to 3
     with open("llm_course_descriptions.jsonl", "a") as f:
         tasks = [
             process_row(row, f, semaphore)
