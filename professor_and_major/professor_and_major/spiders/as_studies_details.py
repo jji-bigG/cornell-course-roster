@@ -6,17 +6,17 @@ class AsStudiesDetailsSpider(scrapy.Spider):
     name = "as_studies_details"
     allowed_domains = ["as.cornell.edu"]
 
-    start_urls = [
-        "https://as.cornell.edu/major_minor_gradfield/africana-studies",
-    ]
+    # start_urls = [
+    #     "https://as.cornell.edu/major_minor_gradfield/africana-studies",
+    # ]
 
-    # def start_requests(self):
-    #     with open("as-studies-list.json") as f:
-    #         studies = json.load(f)
-    #     for study in studies:
-    #         yield scrapy.Request(
-    #             url=study["url"], callback=self.parse, meta={"title": study["title"]}
-    #         )
+    def start_requests(self):
+        with open("as-studies-list.json") as f:
+            studies = json.load(f)
+        for study in studies:
+            yield scrapy.Request(
+                url=study["url"], callback=self.parse, meta={"title": study["title"]}
+            )
 
     def parse(self, response):
         title = response.css("h1.title::text").get().strip()
@@ -25,13 +25,12 @@ class AsStudiesDetailsSpider(scrapy.Spider):
 
         details = {
             "title": title,
-            # "url": response.url,
-            # "description": content.css("p::text").get(default="").strip(),
+            "url": response.url,
+            "description": content.css("p::text").get(default="").strip(),
             "requirements": self.extract_requirements(response),
-            # "sample_classes": self.extract_sample_classes(content),
-            # "outcomes": self.extract_outcomes(content),
-            # "content": self.parse_content(content),
-            # "sidebar": self.extract_sidebar(sidebar),
+            "sample_classes": self.extract_sample_classes(content),
+            "outcomes": self.extract_outcomes(content),
+            "sidebar": self.extract_sidebar(sidebar),
         }
 
         yield details
