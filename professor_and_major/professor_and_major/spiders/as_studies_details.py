@@ -6,40 +6,40 @@ class AsStudiesDetailsSpider(scrapy.Spider):
     name = "as_studies_details"
     allowed_domains = ["as.cornell.edu"]
 
-    def start_requests(self):
-        with open("as-studies-list.json") as f:
-            studies = json.load(f)
-        for study in studies:
-            yield scrapy.Request(
-                url=study["url"], callback=self.parse, meta={"title": study["title"]}
-            )
+    start_urls = [
+        "https://as.cornell.edu/major_minor_gradfield/africana-studies",
+    ]
+
+    # def start_requests(self):
+    #     with open("as-studies-list.json") as f:
+    #         studies = json.load(f)
+    #     for study in studies:
+    #         yield scrapy.Request(
+    #             url=study["url"], callback=self.parse, meta={"title": study["title"]}
+    #         )
 
     def parse(self, response):
-        title = response.meta["title"]
+        title = response.css("h1.title::text").get().strip()
         content = response.css("div.content")
         sidebar = response.css("div.sidebar")
 
         details = {
             "title": title,
-            "url": response.url,
-            "description": content.css("p::text").get(default="").strip(),
-            "requirements": self.extract_requirements(content),
-            "sample_classes": self.extract_sample_classes(content),
-            "outcomes": self.extract_outcomes(content),
-            "sidebar": self.extract_sidebar(sidebar),
+            # "url": response.url,
+            # "description": content.css("p::text").get(default="").strip(),
+            "requirements": self.extract_requirements(response),
+            # "sample_classes": self.extract_sample_classes(content),
+            # "outcomes": self.extract_outcomes(content),
+            # "content": self.parse_content(content),
+            # "sidebar": self.extract_sidebar(sidebar),
         }
 
         yield details
 
-    def extract_requirements(self, content):
-        requirements = {
-            "major": content.css(
-                "h3#major-requirements + p::text, h3#major-requirements + p + ul li::text"
-            ).getall(),
-            "minor": content.css(
-                "h3#minor-requirements + p::text, h3#minor-requirements + p + ul li::text"
-            ).getall(),
-        }
+    def extract_requirements(self, response):
+        requirements = response.css(
+            "h2#requirments + h3 + p::text, h2#requirments + h3 + p + p::text, h2#requirments + h3 + p + p + p::text, h2#requirments + h3 + ul li::text, h2#requirments + h3 + p + ul li::text, h2#requirments + h3 + p + p + ul li::text, h2#requirments + h3 + p + p + p + ul li::text, h2#requirments + p::text, h2#requirments + p + p::text, h2#requirments + p + p + p::text, h2#requirments + p + p + p + p::text, h2#requirments + ul li::text, h2#requirments + ul + ul li::text"
+        ).getall()
         return requirements
 
     def extract_sample_classes(self, content):
