@@ -175,33 +175,38 @@ cursor = conn.cursor()
 NUM_PARALLEL_TASKS = 6
 NUM_TOP_POSTS = 10
 
-courses = set(
-    sorted(
-        [c[0] for c in cursor.execute("SELECT DISTINCT name FROM courses").fetchall()],
-        key=lambda x: len(x[0]),
-    )
-)
-# print(courses)
+# courses = set(
+#     sorted(
+#         [c[0] for c in cursor.execute("SELECT DISTINCT name FROM courses").fetchall()],
+#         key=lambda x: len(x[0]),
+#     )
+# )
+# # print(courses)
 
-for course in courses:
-    generateCSVForReddit(course, NUM_TOP_POSTS, cursor=cursor)
-    print(f"reddit: done with course: {course}")
+# for course in courses:
+#     generateCSVForReddit(course, NUM_TOP_POSTS, cursor=cursor)
+#     print(f"reddit: done with course: {course}")
 
 professors = set(
     sorted(
         [
             p[0]
             for p in cursor.execute(
-                "SELECT DISTINCT instructors FROM courses"
+                "SELECT DISTINCT instructor FROM courses"
             ).fetchall()
         ],
         key=lambda x: len(x[0]),
     )
 )
 
+f = open("reddit_rejected_professors.txt", "a")
 for professor in professors:
-    generateCSVForReddit(professor, NUM_TOP_POSTS, cursor=cursor)
-    print(f"reddit: done with professor: {professor}")
+    try:
+        prof = professor.split(" (")[0].strip()
+    except:
+        prof = professor
+    generateCSVForReddit(prof, NUM_TOP_POSTS, cursor=cursor)
+    print(f"reddit: done with professor: {prof}")
 
 # with ThreadPoolExecutor(max_workers=NUM_PARALLEL_TASKS) as executor:
 #     for professor in professors:

@@ -116,8 +116,12 @@ async def process_row(row, f, semaphore):
             dates=dates,
         )
 
-        response = json.loads(await chat(prompt))
-        print(f"processed {title}")
+        response = await chat(prompt)
+        try:
+            response = json.loads(response)
+            print(f"processed {title}")
+        except json.JSONDecodeError:
+            print(f"failed to process {title}")
         f.write(
             json.dumps(
                 {
@@ -133,7 +137,7 @@ async def process_row(row, f, semaphore):
 
 
 async def main():
-    semaphore = asyncio.Semaphore(5)  # Limit concurrent tasks to 3
+    semaphore = asyncio.Semaphore(8)
     with open("llm_course_descriptions.jsonl", "a") as f:
         tasks = [
             process_row(row, f, semaphore)
