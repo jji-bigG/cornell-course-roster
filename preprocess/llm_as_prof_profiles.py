@@ -25,7 +25,7 @@ From the above faculty details, please extract the following (they're the keys t
 DO NOT MAKE UP ANY INFORMATION, ONLY EXTRACT INFORMATION THAT IS PRESENT IN THE TEXT.
 If there is not enough information to extract these information, output "None".
 If there is not enough information to extract these information, output "[]" as an empty JSON list.
-JSON output must be compatible and must begin with {{ and end with }} so that python's json.loads can parse it.
+JSON output must be compatible and must begin with {{ and end with }} so that python's json.loads can parse it. DO NOT BEGIN WITH ```json and end with ```! 
 No escape character is needed for ', and wrap string with double quotes.
 
 For example:
