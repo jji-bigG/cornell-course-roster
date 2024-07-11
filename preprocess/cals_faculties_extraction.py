@@ -29,12 +29,7 @@ links: {links}. this might not be helpful, just a quick reference
 # WHAT TO EXTRACT
 
 ### INSTRUCTIONS
-- email: give me the faculty's email from that unparsed HTML tags (example output: rj378@cornell.edu)
-- research: give me the faculty's research interests. in what fields do him/her excel? where is this faculty going with the research? what research goals do he/she have? 5-7 short sentences should suffice 
-- experience: based on the faculty's education, awards, publications, and such, what is the faculty's experience like? is he/she a seasoned professional or a fresh graduate? 4-6 short sentences should suffice
-- teaching: what courses does the faculty teach? what are the faculty's teaching methods? what are the faculty's teaching goals? 4-6 short sentences should suffice. THIS MAY NOT BE PRESENT IN THE INFORMATION AND MUST BE BASED ON FACTUAL INFORMATION (if not present, output "[]")
-- is_student: TRUE/FALSE output based on the above information
-- fields: what fields does the faculty specialize in? what are the faculty's research interests? what are the faculty's teaching interests? 3-5 short phrases should suffice
+- goals: What is the faculty working towards based on his research, publications, biography? (e.g. "to develop a new algorithm for X", "to improve the efficiency of Y", etc.) THIS SHOULD BE A LIST OF STRINGS. This can be short or long sentences as needed.
 
 ### OUTPUT REQUIREMENT
 for each bullet point in INSTRUCTIONS, OUTPUT A LIST OF STRINGS that captures the information as needed.
@@ -49,6 +44,14 @@ DO NOT INCLUDE ANY EXPLANATIONS OR COMMENTS IN THE OUTPUT. ONLY THE JSON OUTPUT 
 
 output:
 """
+
+# - email: give me the faculty's email from that unparsed HTML tags (example output: rj378@cornell.edu)
+# - research: give me the faculty's research interests. in what fields do him/her excel? where is this faculty going with the research? what research goals do he/she have? 5-7 short sentences should suffice
+# - experience: based on the faculty's education, awards, publications, and such, what is the faculty's experience like? is he/she a seasoned professional or a fresh graduate? 4-6 short sentences should suffice
+# - teaching: what courses does the faculty teach? what are the faculty's teaching methods? what are the faculty's teaching goals? 4-6 short sentences should suffice. THIS MAY NOT BE PRESENT IN THE INFORMATION AND MUST BE BASED ON FACTUAL INFORMATION (if not present, output "[]")
+# - is_student: TRUE or FALSE output based on the above information. output TRUE if the faculty is a student, otherwise FALSE
+# - has_extensive_profile: TRUE or FALSE output based on the above information to determine whether the profile has a very complete information or not (if there are a lot that is covered about the professor, output TRUE, otherwise FALSE)
+# - fields: what fields does the faculty specialize in? what are the faculty's research interests? what are the faculty's teaching interests? 3-5 short phrases should suffice
 
 from openai import AsyncOpenAI
 import json
@@ -83,7 +86,7 @@ df = pd.read_json("cals-prof-details.json")
 
 try:
     SEEN = set()
-    f = open("llm_cals_faculties_extracted.jsonl", "r")
+    f = open("llm_cals_faculties_extracted-goals.jsonl", "r")
     for line in f:
         l = json.loads(line)
         SEEN.add(l["title"])
@@ -112,12 +115,27 @@ async def process_row(row, f, semaphore):
             email=row["contacts"]["email"] if "email" in row["contacts"] else "[]",
             links=row["contacts"]["links"] if "links" in row["contacts"] else "[]",
         )
+        if len(prompt) > 45000:
+            prompt = EXTRACT_AS_STUDIES_PROMPT.format(
+                position=row["position"],
+                summary=row["summary"],
+                edu_and_awards='row["edu_and_awards"]',
+                interests=row["interests"],
+                publications=row["publications"],
+                courses_taught=row["courses_taught"],
+                news_items=row["news_items"],
+                email=row["contacts"]["email"] if "email" in row["contacts"] else "[]",
+                links=row["contacts"]["links"] if "links" in row["contacts"] else "[]",
+            )
+            print(f"prompt too long for {title}")
+
         response = await chat(prompt)
+
         try:
-            if response.startswith("{{"):
-                extracted = json.loads(response)
-            else:
+            if response.startswith("```json"):
                 extracted = json.loads(response[len("```json\n") : -len("\n```")])
+            else:
+                extracted = json.loads(response)
         except:
             extracted = response
         study = {
@@ -131,7 +149,7 @@ async def process_row(row, f, semaphore):
 
 async def main():
     semaphore = asyncio.Semaphore(10)
-    with open("llm_cals_faculties_extracted.jsonl", "a") as f:
+    with open("llm_cals_faculties_extracted-goals.jsonl", "a") as f:
         tasks = [process_row(row, f, semaphore) for _, row in df.iterrows()]
         await asyncio.gather(*tasks)
 

@@ -6,6 +6,8 @@ SU*/
 SP*/
 html*/
 
+*reddit_errors.txt
+
 __pycache__
 *.pyc
 

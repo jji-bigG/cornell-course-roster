@@ -144,14 +144,18 @@ def generateCSVForReddit(
 ):
     if fname is None:
         fname = f"reddit/data/{search}.csv"
+
     if os.path.exists(fname):
         print(f"File {fname} already exists. Skipping.")
         return
     try:
         data = redditData(subreddit, search, limit, cursor=cursor)
         data.to_csv(fname, index=False)
+        print(f"done with {fname}")
     except Exception as e:
         print(f"Error: {e}")
+        with open("reddit/reddit_errors.txt", "a") as f:
+            f.write(f"{e}\n")
         return None
 
 
@@ -175,38 +179,37 @@ cursor = conn.cursor()
 NUM_PARALLEL_TASKS = 6
 NUM_TOP_POSTS = 10
 
-# courses = set(
-#     sorted(
-#         [c[0] for c in cursor.execute("SELECT DISTINCT name FROM courses").fetchall()],
-#         key=lambda x: len(x[0]),
-#     )
-# )
-# # print(courses)
-
-# for course in courses:
-#     generateCSVForReddit(course, NUM_TOP_POSTS, cursor=cursor)
-#     print(f"reddit: done with course: {course}")
-
-professors = set(
+courses = set(
     sorted(
-        [
-            p[0]
-            for p in cursor.execute(
-                "SELECT DISTINCT instructor FROM courses"
-            ).fetchall()
-        ],
+        [c[0] for c in cursor.execute("SELECT DISTINCT name FROM courses").fetchall()],
         key=lambda x: len(x[0]),
     )
 )
+# print(courses)
 
-f = open("reddit_rejected_professors.txt", "a")
-for professor in professors:
-    try:
-        prof = professor.split(" (")[0].strip()
-    except:
-        prof = professor
-    generateCSVForReddit(prof, NUM_TOP_POSTS, cursor=cursor)
-    print(f"reddit: done with professor: {prof}")
+for course in courses:
+    generateCSVForReddit(course, NUM_TOP_POSTS, cursor=cursor)
+
+# professors = set(
+#     sorted(
+#         [
+#             p[0]
+#             for p in cursor.execute(
+#                 "SELECT DISTINCT instructor FROM courses"
+#             ).fetchall()
+#         ],
+#         key=lambda x: len(x[0]),
+#     )
+# )
+
+# f = open("reddit_rejected_professors.txt", "a")
+# for professor in professors:
+#     try:
+#         prof = professor.split(" (")[0].strip()
+#     except:
+#         prof = professor
+#     generateCSVForReddit(prof, NUM_TOP_POSTS, cursor=cursor)
+#     print(f"reddit: done with professor: {prof}")
 
 # with ThreadPoolExecutor(max_workers=NUM_PARALLEL_TASKS) as executor:
 #     for professor in professors:
