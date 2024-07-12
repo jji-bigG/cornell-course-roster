@@ -1,7 +1,9 @@
 EXTRACT_REDDIT_PROMPT = """
-You are a student at a world prestigious American college who loves to extract information from blogs & reddit posts. You are reviewing Reddit posts about the college's courses and faculty members. 
+You are a student at a world prestigious American college who loves to give insights and ask questions from blogs & reddit posts. You are reviewing Reddit posts about the college's courses and faculty members. 
 
 You are here to make decisions about your future studies/majors/minors, research, career, social life, and more. You want to extract and come up with insightful analysis of the courses, faculty members, or social aspects of this college based on the information provided.
+
+You are now presenting about these extracted information, and suppose a new incoming student who is not familar with these information will ask you questions, so you need to provide a concise inference on where that information can be helpful. 
 
 # INFORMATION
 
@@ -48,119 +50,3 @@ DO NOT INCLUDE ANY EXPLANATIONS OR COMMENTS IN THE OUTPUT. ONLY THE JSON OUTPUT 
 
 output (starting with {{ and ending with }}):
 """
-
-from openai import AsyncOpenAI
-import json
-
-client = AsyncOpenAI(
-    base_url="http://101.35.52.226:9090/v1",
-    api_key="api-key",
-    timeout=45,
-)
-
-
-async def chat(prompt, stream=False, temperature=0.0, n=1):
-    response = await client.chat.completions.create(
-        model="qwen-110b-chat",
-        messages=[{"role": "user", "content": prompt}],
-        stream=stream,
-        max_tokens=512,
-        temperature=temperature,
-        n=n,
-        stop=["<|endoftext|>", "<|im_end|>"],
-    )
-    if not stream:
-        if n == 1:
-            return response.choices[0].message.content.strip()
-        return response.choices
-    return response
-
-
-import pandas as pd
-import sqlite3
-
-conn = sqlite3.connect("roster_reviews.sqlite.db")
-
-posts_df = pd.read_sql_query("SELECT * FROM reddit_posts", conn)
-comments_df = pd.read_sql_query("SELECT * FROM reddit_comments", conn)
-
-conn.close()
-
-try:
-    SEEN = set()
-    f = open("llm_reddit_under_20.jsonl", "r")
-    for line in f:
-        study = json.loads(line)
-        SEEN.add(study["post_id"])
-    f.close()
-except FileNotFoundError:
-    SEEN = set()
-
-import asyncio
-
-
-async def process_row(post, comments, f, semaphore):
-    title = post["title"]
-
-    if post["post_id"] in SEEN:
-        print(f"seen {title} already")
-        return
-    async with semaphore:
-        cmt = [
-            {
-                "body": b,
-                "score": s,
-            }
-            for b, s in zip(comments["body"], comments["score"])
-            if b
-        ]
-        prompt = EXTRACT_REDDIT_PROMPT.format(
-            title=title,
-            content=post["selftext"],
-            upvotes=post["score"],
-            num_comments=post["num_comments"],
-            created_utc=post["created_utc"],
-            comments=cmt,
-        )
-        # print(cmt)
-        try:
-            response = await chat(prompt)
-        except Exception as e:
-            print(f"error with {title}: {e}")
-            with open("errors.txt", "a") as f:
-                f.write(f"{title}: {e}\n")
-            return
-
-        try:
-            extracted = json.loads(response)
-        except:
-            extracted = response
-        extract = {
-            "post_id": post["post_id"],
-            "link": post["permalink"],
-            "extracted": extracted,
-        }
-        f.write(json.dumps(extract) + "\n")
-        SEEN.add(title)
-        print(f"processed {title}")
-
-
-async def main():
-    semaphore = asyncio.Semaphore(10)
-    with open("llm_reddit_under_20.jsonl", "a") as f:
-        tasks = [
-            process_row(
-                post,
-                comments_df[comments_df["post_id"] == post["post_id"]],
-                f,
-                semaphore,
-            )
-            for _, post in posts_df.iterrows()
-            if isinstance(post["num_comments"], (int, float))
-            and 0 < post["num_comments"] < 20
-        ]
-        await asyncio.gather(*tasks)
-
-
-if __name__ == "__main__":
-    asyncio.run(main())

@@ -23,18 +23,22 @@ dates: {dates}
 - perceived_prerequisites: what is actually needed to understand these. NOT the hard-written prerequisites list because that can be misleading and inaccurate, since some concepts are rarely used. output a list of short and concise string capturing everything. short sentences suffice
 - contents: what is taught in this course? output a list of short and concise string capturing everything. short sentences suffice
 - outcomes: What can you now achieve from taking this class that you previously cannot? How does this class benefit you in terms of academic & career & personal growth goals? How does it fit into the prerequisites chain? output a list of short and concise string capturing everything. short sentences suffice
-- hard_written_prerequisites: output as a list of course codes string is fine
-- distributions: a list (multiselect) from a predefined set of distributions, rest is ignored.
-- combined_with: output a list of course codes from the natural language input.
 
 ### OUTPUT REQUIREMENTS
-DO NOT MAKE UP ANY INFORMATION. IF THE DESCRIPTION IS NOT AVIALBLE OR IS EMPTY OR SUCH, OUTPUT EMPTY STRINGS OR EMPTY LISTS FOR EVERY FIELD; DO NOT MAKE ANY EDUCATED GUESS ON PURELY THE TITLE!
+YOU ARE ENCOURAGED TO MAKE INFERENCES AND TRY TO EXTRACT AS MUCH INFORMATION AS POSSIBLE. IT IS FINE TO MAKE UP INFORMATION IF IT IS LOGICALLY CONNECTED.
 If there is not enough information to extract these information, output "[]" as an empty JSON list.
 JSON output must be compatible and must begin with {{ and end with }} so that python's json.loads can parse it.
 No escape character is needed for ', and wrap string with double quotes.
 
 ### JSON DATA EXTRACTED (beginning with {{ and ending with }} WITHOUT ```json and ```):
 """
+
+
+# - hard_written_prerequisites: output as a list of course codes string is fine
+# - distributions: a list (multiselect) from a predefined set of distributions, rest is ignored.
+# - combined_with: output a list of course codes from the natural language input.
+
+# DO NOT MAKE UP ANY INFORMATION. IF THE DESCRIPTION IS NOT AVIALBLE OR IS EMPTY OR SUCH, OUTPUT EMPTY STRINGS OR EMPTY LISTS FOR EVERY FIELD; DO NOT MAKE ANY EDUCATED GUESS ON PURELY THE TITLE!
 
 import pandas as pd
 import sqlite3
@@ -51,7 +55,7 @@ courses_df = pd.read_sql_query("SELECT * FROM courses", conn)
 conn.close()
 
 try:
-    fr = open("llm_course_descriptions.jsonl", "r")
+    fr = open("llm_course_descriptions-inference.jsonl", "r")
     seen_courses = set()
     for l in fr.readlines():
         saved_courses = json.loads(l)
@@ -138,7 +142,7 @@ async def process_row(row, f, semaphore):
 
 async def main():
     semaphore = asyncio.Semaphore(8)
-    with open("llm_course_descriptions.jsonl", "a") as f:
+    with open("llm_course_descriptions-inference.jsonl", "a") as f:
         tasks = [
             process_row(row, f, semaphore)
             for i, row in course_descriptions_df.iterrows()
