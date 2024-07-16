@@ -141,7 +141,7 @@ async def process_row(row, f, semaphore):
 
 
 async def main():
-    semaphore = asyncio.Semaphore(8)
+    semaphore = asyncio.Semaphore(6)
     with open("llm_course_descriptions-inference.jsonl", "a") as f:
         tasks = [
             process_row(row, f, semaphore)

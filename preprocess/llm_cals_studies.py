@@ -112,7 +112,7 @@ async def process_row(row, f, semaphore):
 
 
 async def main():
-    semaphore = asyncio.Semaphore(10)
+    semaphore = asyncio.Semaphore(3)
     with open(fname, "a") as f:
         tasks = [process_row(row, f, semaphore) for _, row in details_df.iterrows()]
         await asyncio.gather(*tasks)
